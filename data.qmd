@@ -20,4 +20,4 @@ Across different months of the year, the number of missing values across all col
 
 ![Correlation of Missing Data Between Columns](DataExploration/Plots/plot3_.png){width="100%" align="center"}
 
-From the correlation coefficients of column missing values, we observe that when the X_COORD_CD or Y_COORD_CD values are missing, the LATITUDE and LONGITUDE values will always be missing. Moreover, when PD_CD values are missing, PD_DESC will also be missing; when TRANSIT_DISTRICT data is missing, the STATION_NAME information will also be missing; and when VIC_AGE_GROUP is missing, it is very likely that the VIC_RACE information will be missing.
+From the correlation coefficients of column missing values, we observe that when the X_COORD_CD or Y_COORD_CD values are missing, the LATITUDE and LONGITUDE values will always be missing. Moreover, when PD_CD values are missing, PD_DESC will also be missing; when TRANSIT_DISTRICT data is missing, the STATION_NAME information will also be missing. Furthermore, when VIC_AGE_GROUP is missing, it is very likely that the VIC_RACE information will be missing.
