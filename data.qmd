@@ -10,7 +10,7 @@ Our team would import the data directly into R using the read.csv() function, si
 
 There are many columns with missing values after our team converts “Unknown” and “(null)” strings to NA’s. We left “U” in the gender columns as is for now since we have no evidence of it representing unknown.
 
-![](DataExploration/Plots/plot1.png){width="80%" align="center"}
+![](DataExploration/Plots/plot1.png){width="100%" align="center"}
 
 Out of the 35 columns, there are 13 columns containing no missing values, 9 columns having less than 1 percent missing values, 8 columns containing missing values in the range of 5% to 50%, and the remaining 5 columns containing missing values over 90%.
 

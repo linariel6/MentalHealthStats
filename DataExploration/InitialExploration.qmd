@@ -6,8 +6,8 @@ library(dplyr)
 
 
 ```{r}
-data <- read.csv('NYPD_Complaint_Data_Historic_20241118.csv')
-head(data)
+data <- read.csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
+# head(data)
 ```
 ```{r}
 dim(data)
@@ -16,10 +16,11 @@ dim(data)
 # Null values may also appear in instances where
 # information was not available or unknown at the time of the report and should be
 # considered as either “Unknown/Not Available/Not Reported.”
-glimpse(data)
 
-unique(data$SUSP_SEX)
-unique(data$VIC_SEX)
+# glimpse(data)
+# 
+# unique(data$SUSP_SEX)
+# unique(data$VIC_SEX)
 ```
 ```{r}
 data <- data |> 
