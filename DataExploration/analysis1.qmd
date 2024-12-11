@@ -1,0 +1,190 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(ggmap)
+```
+
+
+```{r}
+data_raw <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
+head(data_raw)
+```
+
+
+```{r}
+# Converting '(null)' and 'UNKNOWN' strings to NAs
+data <- data_raw |> 
+  mutate(across(everything(), ~ replace(., . %in% c('(null)', 'UNKNOWN'), NA)))
+
+# During our initial data exploration, we found there were 5 cols with > 95% missing data, 
+# we will drop those cols
+data <- data |>  select(-HOUSING_PSA, -TRANSIT_DISTRICT, -STATION_NAME, -PARKS_NM, -HADEVELOPT)
+```
+
+
+```{r}
+# Converting to type Date or period
+data$CMPLNT_FR_DT <- mdy(data$CMPLNT_FR_DT)  
+data$CMPLNT_TO_DT <- mdy(data$CMPLNT_TO_DT)  
+data$RPT_DT <- mdy(data$RPT_DT)            
+
+data$CMPLNT_FR_TM <- hms(data$CMPLNT_FR_TM)  
+data$CMPLNT_TO_TM <- hms(data$CMPLNT_TO_TM) 
+glimpse(data)
+```
+```{r}
+data2 <- data
+
+data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
+
+hourly_data <- data2 |> 
+  filter(!is.na(CMPLNT_FR_HOUR)) |>  
+  count(CMPLNT_FR_HOUR) |>          
+  complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
+
+ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
+  labs(
+    title = "Complaints Filed by Time of Day",
+    x = "Hour of Day",
+    y = "Counts"
+  ) +
+  scale_x_continuous(breaks = 0:23, labels = 0:23) +  
+  theme_minimal()
+
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+
+library(vcd)
+mosaic_data <- data |> 
+  filter(!is.na(BORO_NM) & !is.na(LAW_CAT_CD)) |> 
+  rename(
+    Complaint_Severity = LAW_CAT_CD,
+    Complaint_Filed_Borough = BORO_NM
+  ) |> 
+  mutate(
+    Complaint_Severity = factor(
+      Complaint_Severity, 
+      levels = c("VIOLATION", "MISDEMEANOR", "FELONY")
+    )
+  )
+
+mosaic(Complaint_Severity ~ Complaint_Filed_Borough, mosaic_data, direction = c("v", "h"),
+       highlighting_fill = c("#B3D9FF", "#66B2FF", "#0066CC"),
+       main = "Complaints by Borough and Severity")
+```
+
+```{r}
+library(RColorBrewer)
+
+color_palette <- brewer.pal(n = 5, name = "Blues")
+
+# in the age group cols, there are numbers don't make sense 
+# > unique(data$VIC_AGE_GROUP)
+#  [1] NA      "25-44" "18-24" "45-64" "65+"   "<18"   "-60"   "-971"  "-975"  "1018"  "-932"  "1023"  "1013" 
+# [14] "-46"   "962"   "-962"  "-64"   "-953"  "-30"   "-2"    "1020"  "-964"  "-61"   "-58"   "953"   "-929" 
+# [27] "-961"  "-10"   "1022"  "-970"  "-6"    "-968"  "-3"    "-33"   "949"  
+# we will only plot the ones that make sense
+
+valid_age_groups <- c("<18", "18-24", "25-44", "45-64", "65+")
+
+age_heatmap <- data |> 
+  filter(SUSP_AGE_GROUP %in% valid_age_groups & VIC_AGE_GROUP %in% valid_age_groups) |> 
+  count(SUSP_AGE_GROUP, VIC_AGE_GROUP)  # Count unique pairings
+
+ggplot(age_heatmap, aes(x = SUSP_AGE_GROUP, y = VIC_AGE_GROUP, fill = n)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn(colors = color_palette, name = "Count") +
+  labs(
+    title = "Suspect-Victim Age Group Interactions",
+    x = "Suspect Age Group",
+    y = "Victim Age Group"
+  ) +
+  theme_minimal()
+
+
+
+```
+
+
+```{r}
+race_heatmap <- data %>%
+  filter(!is.na(SUSP_RACE) & !is.na(VIC_RACE)) |> 
+  count(SUSP_RACE, VIC_RACE)  
+
+ggplot(race_heatmap, aes(x = SUSP_RACE, y = VIC_RACE, fill = n)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn(colors = brewer.pal(9, "Blues"), name = "Count") +
+  labs(
+    title = "Suspect-Victim Race Group Interactions",
+    x = "Suspect Race",
+    y = "Victim Race"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+```
+
+```{r}
+data <- data |> 
+  mutate(
+    Offense_Category = case_when(
+      OFNS_DESC %in% c("PETIT LARCENY", "GRAND LARCENY", "POSSESSION OF STOLEN PROPERTY",
+                       "GRAND LARCENY OF MOTOR VEHICLE", "PETIT LARCENY OF MOTOR VEHICLE",
+                       "OTHER OFFENSES RELATED TO THEF") ~ "Theft",
+      OFNS_DESC %in% c("FELONY ASSAULT", "ASSAULT 3 & RELATED OFFENSES", "RAPE",
+                       "MURDER & NON-NEGL. MANSLAUGHTER", "KIDNAPPING & RELATED OFFENSES",
+                       "FELONY SEX CRIMES", "SEX CRIMES") ~ "Violence",
+      OFNS_DESC %in% c("DANGEROUS DRUGS", "CANNABIS RELATED OFFENSES") ~ "Drug-related",
+      OFNS_DESC %in% c("BURGLARY", "CRIMINAL TRESPASS", "BURGLAR'S TOOLS") ~ "Burglary",
+      OFNS_DESC %in% c("DANGEROUS WEAPONS", "UNLAWFUL POSS. WEAP. ON SCHOOL") ~ "Weapons",
+      OFNS_DESC %in% c("DISORDERLY CONDUCT", "PROSTITUTION & RELATED OFFENSES", "LOITERING") ~ "Public Order",
+      TRUE ~ "Other"  
+    ),
+    Time_of_Day = case_when(
+      hour(hms(CMPLNT_FR_TM)) >= 5 & hour(hms(CMPLNT_FR_TM)) < 12 ~ "Morning",
+      hour(hms(CMPLNT_FR_TM)) >= 12 & hour(hms(CMPLNT_FR_TM)) < 17 ~ "Afternoon",
+      hour(hms(CMPLNT_FR_TM)) >= 17 & hour(hms(CMPLNT_FR_TM)) < 21 ~ "Evening",
+      TRUE ~ "Night"
+    )
+  )
+
+
+```
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+#| 
+heatmap_data <- data |> 
+  filter(!is.na(Time_of_Day) & !is.na(Offense_Category) & !is.na(BORO_NM)) |> 
+  count(BORO_NM, Time_of_Day, Offense_Category) |> 
+  group_by(BORO_NM) |> 
+  mutate(Percentage = n / sum(n) * 100) |> 
+  ungroup() |> 
+  mutate(Offense_Category = fct_reorder(Offense_Category, Percentage, .desc = TRUE))  |> 
+  mutate(Time_of_Day = factor(Time_of_Day, levels = c("Morning", "Afternoon", "Evening", "Night")))
+
+ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentage)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn(colors = color_palette, name = "Percentage", labels = percent_format(scale = 1)) +
+  labs(
+    title = "Percentage of Offense Categories by Time of Day and Borough",
+    x = "Time of Day",
+    y = "Offense Category"
+  ) +
+  facet_wrap(~ BORO_NM, nrow = 1) + 
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),  
+    strip.text = element_text(size = 10, face = "bold")  
+  )
+```
+```{r}
+
+```
+
