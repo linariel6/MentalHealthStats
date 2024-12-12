@@ -4,8 +4,35 @@ library(ggplot2)
 library(dplyr)
 library(lubridate)
 library(ggmap)
+library(scales)
 ```
 
+
+```{r}
+df <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_201920212023.csv')
+df
+```
+
+```{r}
+data2 <- df
+data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
+
+hourly_data <- data2 |> 
+  filter(!is.na(CMPLNT_FR_HOUR)) |>  
+  count(CMPLNT_FR_HOUR) |>          
+  complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
+
+ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
+  labs(
+    title = "Complaints Filed by Time of Day",
+    x = "Hour of Day",
+    y = "Counts (in thousands)"
+  ) +
+  scale_x_continuous(breaks = 0:23, labels = 0:23) +
+  scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
+  theme_minimal()
+```
 
 ```{r}
 data_raw <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
@@ -49,9 +76,10 @@ ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
   labs(
     title = "Complaints Filed by Time of Day",
     x = "Hour of Day",
-    y = "Counts"
+    y = "Counts (in thousands)"
   ) +
-  scale_x_continuous(breaks = 0:23, labels = 0:23) +  
+  scale_x_continuous(breaks = 0:23, labels = 0:23) +
+  scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
   theme_minimal()
 
 ```
@@ -113,9 +141,22 @@ ggplot(age_heatmap, aes(x = SUSP_AGE_GROUP, y = VIC_AGE_GROUP, fill = n)) +
 
 
 ```{r}
-race_heatmap <- data %>%
+race_mapping <- c(
+  "WHITE HISPANIC" = "WH",
+  "BLACK HISPANIC" = "BH",
+  "BLACK" = "Blk",
+  "WHITE" = "Wht",
+  "ASIAN / PACIFIC ISLANDER" = "API",
+  "AMERICAN INDIAN/ALASKAN NATIVE" = "AIAN"
+)
+
+race_heatmap <- data |> 
   filter(!is.na(SUSP_RACE) & !is.na(VIC_RACE)) |> 
-  count(SUSP_RACE, VIC_RACE)  
+  count(SUSP_RACE, VIC_RACE)  |> 
+  mutate(
+    SUSP_RACE = recode(SUSP_RACE, !!!race_mapping),
+    VIC_RACE = recode(VIC_RACE, !!!race_mapping)
+  )
 
 ggplot(race_heatmap, aes(x = SUSP_RACE, y = VIC_RACE, fill = n)) +
   geom_tile(color = "white") +
@@ -125,8 +166,7 @@ ggplot(race_heatmap, aes(x = SUSP_RACE, y = VIC_RACE, fill = n)) +
     x = "Suspect Race",
     y = "Victim Race"
   ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme_minimal() 
 
 ```
 
@@ -147,10 +187,10 @@ data <- data |>
       TRUE ~ "Other"  
     ),
     Time_of_Day = case_when(
-      hour(hms(CMPLNT_FR_TM)) >= 5 & hour(hms(CMPLNT_FR_TM)) < 12 ~ "Morning",
-      hour(hms(CMPLNT_FR_TM)) >= 12 & hour(hms(CMPLNT_FR_TM)) < 17 ~ "Afternoon",
-      hour(hms(CMPLNT_FR_TM)) >= 17 & hour(hms(CMPLNT_FR_TM)) < 21 ~ "Evening",
-      TRUE ~ "Night"
+      hour(hms(CMPLNT_FR_TM)) >= 5 & hour(hms(CMPLNT_FR_TM)) < 12 ~ "M",
+      hour(hms(CMPLNT_FR_TM)) >= 12 & hour(hms(CMPLNT_FR_TM)) < 17 ~ "A",
+      hour(hms(CMPLNT_FR_TM)) >= 17 & hour(hms(CMPLNT_FR_TM)) < 21 ~ "E",
+      TRUE ~ "N"
     )
   )
 
@@ -167,7 +207,7 @@ heatmap_data <- data |>
   mutate(Percentage = n / sum(n) * 100) |> 
   ungroup() |> 
   mutate(Offense_Category = fct_reorder(Offense_Category, Percentage, .desc = TRUE))  |> 
-  mutate(Time_of_Day = factor(Time_of_Day, levels = c("Morning", "Afternoon", "Evening", "Night")))
+  mutate(Time_of_Day = factor(Time_of_Day, levels = c("M", "A", "E", "N")))
 
 ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentage)) +
   geom_tile(color = "white") +
@@ -175,12 +215,12 @@ ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentag
   labs(
     title = "Percentage of Offense Categories by Time of Day and Borough",
     x = "Time of Day",
-    y = "Offense Category"
+    y = "Offense Category",
+    caption = "M = Morning\nA = Afternoon\nE = Evening\nN = Night"
   ) +
   facet_wrap(~ BORO_NM, nrow = 1) + 
-  theme_minimal() +
+  theme_minimal(20) +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),  
     strip.text = element_text(size = 10, face = "bold")  
   )
 ```

@@ -6,7 +6,7 @@ library(dplyr)
 
 
 ```{r}
-data <- read.csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
+data <- read.csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_2019_2023.csv')
 # head(data)
 ```
 ```{r}
@@ -40,7 +40,7 @@ missing_data <- data.frame(Column = names(data), Missing_Percent = missing_perce
 ggplot(missing_data, aes(x = reorder(Column, -Missing_Percent), y = Missing_Percent)) +
   geom_bar(stat = "identity", fill = "lightskyblue", color = "black", width = 0.8) +
   coord_flip() +
-  labs(title = "NYPD Complaint 2023 Dataset: Missing Values % by Column",
+  labs(title = "NYPD Complaint 2019-2023 Dataset: Missing Values % by Column",
        x = "Column Name", y = "Missing Data (%)") +
   theme_minimal() 
 
@@ -50,30 +50,33 @@ ggsave("plot1.png", width = 8, height = 8, path = "Plots/")
 ```{r}
 library(lubridate)
 data$CMPLNT_FR_DT <- mdy(data$CMPLNT_FR_DT) 
+
 ```
 
 
 ```{r}
 #| fig-width: 8
-#| fig-height: 8
+#| fig-height: 5
+
 monthly_missing <- data |> 
   mutate(
-    Month = floor_date(CMPLNT_FR_DT, "month"), 
+    Month = month(CMPLNT_FR_DT, label = TRUE), 
     Total_NA = rowSums(is.na(data))            
   ) |>
   group_by(Month) |> 
-  summarize(Missing_Count = sum(Total_NA, na.rm = TRUE))
+  summarize(Missing_Count = sum(Total_NA, na.rm = TRUE) / 1e6) 
 
 ggplot(monthly_missing, aes(x = Month, y = Missing_Count)) +
   geom_bar(stat = "identity", fill = "lightskyblue", color = "black") +
   labs(
-    title = "Total Missing Values by Month",
+    title = "Total Missing Values by Month (Across 5 Years)",
     x = "Month",
-    y = "Total Missing Values"
+    y = "Total Missing Values (in Millions)"
   ) +
   theme_minimal()
 
-ggsave("plot2.png", width = 8, height = 4, path = "Plots/")
+ggsave("plot2.png", width = 8, height = 5, path = "Plots/")
+
 ```
 ```{r}
 #| fig-width: 15
