@@ -1,0 +1,328 @@
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+data <- read.csv("NYPD_Complaint_Data_Historic_2019_2023.csv")
+```
+
+```{r}
+
+data$CMPLNT_TO_DT <- as.Date(data$CMPLNT_TO_DT, format = "%m/%d/%Y")
+
+data <- data |> 
+  mutate(across(everything(), ~ replace(., . %in% c('(null)', 'UNKNOWN'), NA)))
+
+data <- data[!is.na(data$PATROL_BORO), ]
+
+data <- data %>%
+  mutate(
+    BOROUGH = sub("PATROL BORO ", "", PATROL_BORO)
+  )
+
+ data <- data %>%
+  mutate(
+    date = as.Date(CMPLNT_FR_DT, format = "%m/%d/%Y"),
+    year = as.numeric(format(date, "%Y"))
+  ) %>%
+  filter(year %in% c(2019, 2020, 2021, 2022, 2023))
+
+data_2023 <- data %>%
+  filter(format(as.Date(CMPLNT_FR_DT, format = "%m/%d/%Y"), "%Y") == "2023")
+```
+
+
+
+```{r}
+ggplot(yearly_data, aes(x = year, y = count)) +
+  geom_line(size = 1.2, color = "#2ca02c") +  
+  geom_point(size = 3, color = "#2ca02c") + 
+  labs(
+    title = "Crime Incidents: Yearly Analysis",
+    x = "Year",
+    y = "Number of Crime Incidents"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    plot.title = element_text(size = 16, hjust = 0.5)
+  )
+```
+
+
+
+
+```{r}
+
+filtered_data <- data %>%
+  mutate(
+    date = as.Date(CMPLNT_FR_DT, format = "%m/%d/%Y"),  # Parse date
+    year = as.numeric(format(date, "%Y"))              # Extract year
+  ) %>%
+  filter(year %in% c(2019, 2023)) %>%                  # Filter for years 2019 and 2023
+  group_by(BOROUGH, year) %>%
+  summarise(count = n(), .groups = "drop") %>%         # Summarize counts by borough and year
+  pivot_wider(names_from = year, values_from = count, names_prefix = "year_") %>% 
+  mutate(
+    percentage_change = ((year_2023 - year_2019) / year_2019) * 100  # Calculate percentage change
+  ) %>%
+  pivot_longer(
+    cols = starts_with("year_"), names_to = "year", values_to = "count"
+  ) %>%
+  mutate(
+    year = gsub("year_", "", year),        
+    year = str_trim(year),         
+    year = as.factor(year),             
+    year = factor(year, levels = c("2019", "2023")), 
+    BOROUGH = fct_reorder(BOROUGH, count, .desc = FALSE)  # Reorder boroughs by count
+  )
+
+# Create the plot
+ggplot(filtered_data, aes(x = count, y = BOROUGH)) +
+  geom_point(aes(color = factor(year)), size = 3) +  # Use circles for both years
+  geom_line(aes(group = BOROUGH), color = "gray") +  # Connect dots for the same borough
+  geom_text(
+    data = filtered_data %>% filter(year == "2023"),
+    aes(label = paste0(round(percentage_change, 1), "%")),
+    hjust = -0.2,  # Position percentage change to the right of the dots
+    color = "black",  # Use plain black text for the percentages
+    size = 4
+  ) +
+  labs(
+    title = "Crime Count Comparison Across Patrol Boroughs (2019 vs 2023)",
+    x = "Number of Reported Crimes",
+    y = "Patrol Borough",
+    color = "Year"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(size = 10),  
+    axis.text.y = element_text(size = 10),  
+    plot.title = element_text(size = 14, hjust = 0.5)  
+  ) +
+  scale_color_manual(
+    values = c("#1f77b4", "#ff7f0e"), 
+    labels = c("2019", "2023")         # Explicit legend labels
+  ) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0.02, 0.15))  # Add extra space on the right side
+  )
+```
+
+
+
+```{r}
+
+facet_data <- data %>%
+  mutate(
+    month = month(date, label = TRUE, abbr = TRUE)  
+  ) %>%
+  filter(year >= 2019 & year <= 2023) %>%  
+  group_by(BOROUGH, year, month) %>%
+  summarise(monthly_count = n(), .groups = "drop") 
+
+
+# Faceted Line Plot
+ggplot(facet_data, aes(x = month, y = monthly_count, color = factor(year), group = year)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) + 
+  facet_wrap(~ BOROUGH, scales = "free_y") +  
+  labs(
+    title = "Monthly Crime Trends by Borough (2019 to 2023)",
+    x = "Month",
+    y = "Number of Reported Crimes",
+    color = "Year"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8), 
+    axis.text.y = element_text(size = 10),  
+    plot.title = element_text(size = 14, hjust = 0.5),  
+    strip.text = element_text(size = 12),  
+    legend.position = "right" 
+  ) +
+  scale_color_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"))+
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 6))
+```
+
+
+```{r}
+
+# Aggregate weekly crime data
+# Filter out weeks with fewer than 7 days
+weekly_crimes <- data_2023 %>%
+  mutate(week = floor_date(date, "week", week_start = 1)) %>%  # Start weeks on Monday
+  group_by(BOROUGH, week) %>%
+  summarise(
+    weekly_crime_count = n(),       # Count occurrences
+    days_in_week = n_distinct(date),  # Count unique days in the group
+    .groups = "drop"
+  ) %>%
+  filter(days_in_week == 7) %>%  # Keep only full weeks (7 days)
+  select(-days_in_week)          # Remove the temporary column for clarity
+
+
+# Plot with cleaned legend labels
+ggplot(weekly_crimes, aes(x = week, y = weekly_crime_count, color = BOROUGH)) +
+  geom_line() +
+  scale_x_date(
+    date_breaks = "1 month",    
+    date_labels = "%b %Y"       
+  ) +
+  labs(
+    title = "Weekly Crime Incident Trends Across Patrol Boroughs(2023)", 
+    x = "Month", 
+    y = "Number of Reported Crimes",
+    color = "Borough"  # Update legend title
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right", 
+    axis.text.x = element_text(angle = 45, hjust = 1) 
+  )
+
+```
+
+```{r}
+
+data_hour <- data_2023 %>%
+  mutate(hour = as.numeric(substr(CMPLNT_FR_TM, 1, 2))) %>%  # Extract hour from time
+  group_by(hour, BOROUGH) %>%
+  summarise(count = n(), .groups = "drop") 
+
+
+ggplot(data_hour, aes(x = hour, y = count, fill = BOROUGH)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~ BOROUGH, scales = "free_y") + 
+  labs(
+    title = "Hourly Crime Counts by Borough (2023)",  
+    x = "Hour of Day", 
+    y = "Number of Reported Crimes", 
+    fill = "PATROL BORO"  # Add legend title
+  ) +
+  theme_minimal(base_size = 12) +  
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),  
+    legend.position = "right",  
+    legend.text = element_text(size = 9), 
+    legend.title = element_text(size = 10), 
+    strip.text = element_text(size = 10),  
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8), 
+    axis.text.y = element_text(size = 8),  
+    panel.spacing = unit(1, "lines")  # Increase spacing between facets
+  )
+
+```
+
+
+```{r}
+graph_data <- data_2023 %>%
+  mutate(
+    SUSP_SEX = case_when(
+      SUSP_SEX == "M" ~ "M",
+      SUSP_SEX == "F" ~ "F",
+      TRUE ~ "Other"  # Group everything else into "Other"
+    )
+  ) %>%
+  group_by(BOROUGH, SUSP_SEX) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(BOROUGH) %>%
+  mutate(
+    percentage = count / sum(count) * 100, 
+  )
+
+
+ggplot(graph_data, aes(x = BOROUGH, y = count, fill = SUSP_SEX)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", percentage), y = count),
+    position = position_dodge(width = 0.8),
+    vjust = -0.5, size = 3
+  ) +
+  labs(
+    title = "Crime Distribution by Borough and Suspect Sex (2023)",
+    x = "Borough",
+    y = "Number of Reported Crimes",
+    fill = "Suspect Sex"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 7),  
+    legend.position = "right", 
+    legend.title = element_text(size = 8),  
+    legend.text = element_text(size = 8),    
+    panel.grid.major.x = element_blank()  
+  ) +
+  scale_fill_manual(values = c("#B2DF8A", "#33A02C", "#1F78B4"))  
+```
+
+```{r}
+data_2023 <- data_2023 %>%
+  mutate(
+    PREM_TYPE_GROUP = case_when(
+      PREM_TYP_DESC %in% c(
+        "RESIDENCE-HOUSE", "RESIDENCE - PUBLIC HOUSING", 
+        "RESIDENCE - APT. HOUSE", "PVT HOUSE", 
+        "MULTI DWELL - APT BUILD", "MULTI DWELL - PUBLIC HOUS"
+      ) ~ "Residential",
+      
+      PREM_TYP_DESC %in% c(
+        "STREET", "HIGHWAY/PARKWAY", "BRIDGE", "TUNNEL",
+        "OPEN AREAS (OPEN LOTS)", "PARK/PLAYGROUND"
+      ) ~ "Outdoor/Public Areas",
+      
+      PREM_TYP_DESC %in% c(
+        "BAR/NIGHT CLUB", "FAST FOOD", "RESTAURANT/DINER",
+        "DEPARTMENT STORE", "GROCERY/BODEGA", "FOOD SUPERMARKET",
+        "LIQUOR STORE", "VARIETY STORE", "CHAIN STORE"
+      ) ~ "Commercial Establishments",
+      
+      PREM_TYP_DESC %in% c(
+        "CHURCH", "MOSQUE", "SYNAGOGUE", "OTHER HOUSE OF WORSHIP",
+        "CEMETERY"
+      ) ~ "Religious Locations",
+      
+      PREM_TYP_DESC %in% c(
+        "HOTEL/MOTEL", "MARINA/PIER", "TRANSIT FACILITY (OTHER)", 
+        "BUS TERMINAL", "TAXI (YELLOW LICENSED)", "BUS (NYC TRANSIT)"
+      ) ~ "Transit/Travel Facilities",
+      
+      PREM_TYP_DESC %in% c(
+        "HOSPITAL", "DOCTOR/DENTIST OFFICE", "DAYCARE FACILITY",
+        "PUBLIC SCHOOL", "COLLEGE/UNIVERSITY"
+      ) ~ "Educational/Medical Facilities",
+      
+      TRUE ~ "Other"  # For any values not explicitly categorized
+    )
+  )
+```
+
+
+
+```{r}
+ggplot(data_density, aes(x = hour, y = PREM_TYPE_GROUP, fill = density)) +
+  geom_tile() +
+ scale_fill_gradientn(
+  colors = c("#FFE4C4", "#FFA07A", "#FF4500", "#B22222"), # Warm light to dark red-orange
+  name = "Density"
+)+
+  labs(
+    title = "Hourly Crime Density Across Premises Types (2023)",
+    x = "Hour of Day",
+    y = "Premises Group"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 12),
+    plot.title = element_text(size = 14),
+    legend.position = "right"
+  )
+```
+
+
+
