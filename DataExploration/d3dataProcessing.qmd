@@ -1,0 +1,53 @@
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(ggmap)
+library(scales)
+```
+
+```{r}
+df <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_201920212023.csv')
+# head(df)
+```
+```{r}
+# NYC borough land area in sq miles
+
+# chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.nymtc.org/portals/0/pdf/CPT-HSP/NYMTC%20coord%20plan%20NYC%20CH03.pdf
+
+land_areas <- data.frame(
+  BORO_NM = c("MANHATTAN", "BROOKLYN", "BRONX", "QUEENS", "STATEN ISLAND"),
+  LAND_AREA_SQ_MI = c(23, 71, 42, 109, 59)
+)
+```
+
+```{r}
+complaints <- select(df, CMPLNT_FR_TM, BORO_NM) |> 
+  mutate(HOUR = hour(hms(CMPLNT_FR_TM))) |> 
+  filter(!is.na(BORO_NM) & BORO_NM != "(null)")
+# df
+```
+
+
+```{r}
+aggregated_data <- aggregated_data |> 
+  left_join(land_areas, by = "BORO_NM") |> 
+  mutate(COMPLAINTS_PER_SQ_MI = COMPLAINTS / LAND_AREA_SQ_MI) |> 
+  select(BORO_NM, HOUR, COMPLAINTS_PER_SQ_MI) 
+
+all_hours <- expand.grid(
+  BORO_NM = unique(aggregated_data$BORO_NM),
+  HOUR = 0:23
+)
+
+final_data <- all_hours |> 
+  left_join(aggregated_data, by = c("BORO_NM", "HOUR")) |> 
+  mutate(COMPLAINTS_PER_SQ_MI = replace_na(COMPLAINTS_PER_SQ_MI, 0))
+
+# final_data
+```
+```{r}
+write.csv(final_data, "complaints_per_sq_mile.csv", row.names = FALSE)
+```
+

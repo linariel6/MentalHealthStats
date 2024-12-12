@@ -6,7 +6,7 @@ execute:
   echo: true
 
 book:
-  title: "Public Safety Insights: NYPD Complaint Data for 2023"
+  title: "Public Safety Insights: NYPD Complaint Data"
   author:
     - Weilun Chen (wc2885)
     - Ariel Lin (al4735)

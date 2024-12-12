@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>4&nbsp; Interactive graph – Public Safety Insights: NYPD Complaint Data for 2023</title>
+<title>4&nbsp; Interactive graph – Public Safety Insights: NYPD Complaint Data</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -96,7 +96,7 @@ ul.task-list li input[type="checkbox"] {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">Public Safety Insights: NYPD Complaint Data for 2023</a> 
+      <a href="./">Public Safety Insights: NYPD Complaint Data</a> 
         <div class="sidebar-tools-main">
     <a href="https://github.com/linariel6/NYPDComplaintAnalysis" title="Source Code" class="quarto-navigation-tool px-1" aria-label="Source Code"><i class="bi bi-github"></i></a>
 </div>
@@ -173,10 +173,202 @@ ul.task-list li input[type="checkbox"] {
   * {
     font-family: sans-serif;
   }
-</style>
-<div id="plot">
+  
+  /* Hide default range appearance */
+  #time-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 600px;
+    height: 8px;
+    background: #ddd;
+    outline: none;
+    border-radius: 4px;
+    margin-top: 20px;
+  }
 
+  /* Add custom track appearance */
+  #time-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #ddd;
+    border-radius: 4px;
+  }
+
+  #time-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #ddd;
+    border-radius: 4px;
+  }
+
+  /* Add custom triangle thumb (knob) */
+  #time-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0; /* No width for triangle */
+    height: 0; /* No height for triangle */
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 20px solid #007bff;
+    cursor: pointer;
+    transform: translateY(-6px); /* Adjust position to align with track */
+  }
+
+  #time-slider::-moz-range-thumb {
+    width: 0; /* No width for triangle */
+    height: 0; /* No height for triangle */
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 20px solid #007bff;
+    cursor: pointer;
+    transform: translateY(-6px); /* Adjust position to align with track */
+  }
+</style>
+<div id="plot" style="text-align: center;">
+<!-- Explanation Section -->
+<div id="explanation" style="margin-bottom: 20px; font-size: 16px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+Below you can find an interactive visualization representing the change in NYPD complaints density across the five boroughs of New York City over a 24-hour range. Each grid corresponds to a square mile in a borough, and the dots represent the average number of complaint counts in a square mile at a specific hour, based on data averaged over a five-year period (2019–2023). The density of complaints is visualized by the number of dots within each grid. Try using the slider below to explore how complaint density changes across different hours of the day and different boroughs!
 </div>
+<div id="graph-title" style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">
+<pre><code>Average Crime Count per Square Mile per Hour</code></pre>
+</div>
+<!-- Grid and Slider Section --> <svg id="grid"></svg> <input id="time-slider" type="range" min="0" max="23" value="0" step="1" style="width: 600px; margin-top: 20px;">
+<div id="hour-display" style="margin-top: 10px; font-size: 14px; font-weight: bold;">
+Complaints at Hour 0 (0:00 to 0:59)
+</div>
+<div id="scroll-bar-explanation" style="margin-top: 30px; font-size: 16px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+This component was built by calculating the average number of recorded complaints across different hours of the day over a five-year period. The counts for each borough were then divided by the borough’s land area to determine the average number of complaints occurring per square mile per hour. The borough area data was sourced from <a href="chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.nymtc.org/portals/0/pdf/CPT-HSP/NYMTC coord plan NYC CH03.pdf">this link</a>.
+</div>
+<div id="scroll-bar-explanation" style="margin-top: 20px; font-size: 16px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+As you can observe, across different hours of the day, Manhattan consistently has the highest number of crimes per square mile per hour. Down the line, we have Manhattan, the Bronx, Brooklyn, and Queens show progressively lower crime densities. Staten Island has the lowest crime density, possibly due to its smaller population. Throughout the different hours, for all boroughs, a trend of crime densities decreasing from midnight to the lowest at around 6 AM in the morning can be observed. Densities then increase again from 7 AM to around 5 PM, reaching the maximum, before going down again as we get into the night. This information suggests that more resources should be allocated in the afternoon and in areas with higher densities such as Manhattan.
+</div>
+</div>
+<script>
+  const data = [
+    { BORO_NM: "MANHATTAN", HOUR: 0, COMPLAINTS: 628 },
+    { BORO_NM: "BROOKLYN", HOUR: 0, COMPLAINTS: 266 },
+    { BORO_NM: "BRONX", HOUR: 0, COMPLAINTS: 321 },
+    { BORO_NM: "QUEENS", HOUR: 0, COMPLAINTS: 137 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 0, COMPLAINTS: 48 },
+    { BORO_NM: "MANHATTAN", HOUR: 1, COMPLAINTS: 445 },
+    { BORO_NM: "BROOKLYN", HOUR: 1, COMPLAINTS: 179 },
+    { BORO_NM: "BRONX", HOUR: 1, COMPLAINTS: 230 },
+    { BORO_NM: "QUEENS", HOUR: 1, COMPLAINTS: 91 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 1, COMPLAINTS: 31 },
+    { BORO_NM: "MANHATTAN", HOUR: 2, COMPLAINTS: 382 },
+    { BORO_NM: "BROOKLYN", HOUR: 2, COMPLAINTS: 145 },
+    { BORO_NM: "BRONX", HOUR: 2, COMPLAINTS: 188 },
+    { BORO_NM: "QUEENS", HOUR: 2, COMPLAINTS: 78 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 2, COMPLAINTS: 26 },
+    { BORO_NM: "MANHATTAN", HOUR: 3, COMPLAINTS: 324 },
+    { BORO_NM: "BROOKLYN", HOUR: 3, COMPLAINTS: 121 },
+    { BORO_NM: "BRONX", HOUR: 3, COMPLAINTS: 157 },
+    { BORO_NM: "QUEENS", HOUR: 3, COMPLAINTS: 70 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 3, COMPLAINTS: 21 },
+    { BORO_NM: "MANHATTAN", HOUR: 4, COMPLAINTS: 267 },
+    { BORO_NM: "BROOKLYN", HOUR: 4, COMPLAINTS: 101 },
+    { BORO_NM: "BRONX", HOUR: 4, COMPLAINTS: 142 },
+    { BORO_NM: "QUEENS", HOUR: 4, COMPLAINTS: 64 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 4, COMPLAINTS: 17 },
+    { BORO_NM: "MANHATTAN", HOUR: 5, COMPLAINTS: 199 },
+    { BORO_NM: "BROOKLYN", HOUR: 5, COMPLAINTS: 183 },
+    { BORO_NM: "BRONX", HOUR: 5, COMPLAINTS: 117 },
+    { BORO_NM: "QUEENS", HOUR: 5, COMPLAINTS: 49 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 5, COMPLAINTS: 13 },
+    { BORO_NM: "MANHATTAN", HOUR: 6, COMPLAINTS: 220 },
+    { BORO_NM: "BROOKLYN", HOUR: 6, COMPLAINTS: 99 },
+    { BORO_NM: "BRONX", HOUR: 6, COMPLAINTS: 133 },
+    { BORO_NM: "QUEENS", HOUR: 6, COMPLAINTS: 50 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 6, COMPLAINTS: 15 },
+    { BORO_NM: "MANHATTAN", HOUR: 7, COMPLAINTS: 361 },
+    { BORO_NM: "BROOKLYN", HOUR: 7, COMPLAINTS: 138 },
+    { BORO_NM: "BRONX", HOUR: 7, COMPLAINTS: 174 },
+    { BORO_NM: "QUEENS", HOUR: 7, COMPLAINTS: 69 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 7, COMPLAINTS: 24 },
+    { BORO_NM: "MANHATTAN", HOUR: 8, COMPLAINTS: 565 },
+    { BORO_NM: "BROOKLYN", HOUR: 8, COMPLAINTS: 216 },
+    { BORO_NM: "BRONX", HOUR: 8, COMPLAINTS: 261 },
+    { BORO_NM: "QUEENS", HOUR: 8, COMPLAINTS: 98 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 8, COMPLAINTS: 40 },
+    { BORO_NM: "MANHATTAN", HOUR: 9, COMPLAINTS: 623 },
+    { BORO_NM: "BROOKLYN", HOUR: 9, COMPLAINTS: 225 },
+    { BORO_NM: "BRONX", HOUR: 9, COMPLAINTS: 282 },
+    { BORO_NM: "QUEENS", HOUR: 9, COMPLAINTS: 107 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 9, COMPLAINTS: 43 },
+    { BORO_NM: "MANHATTAN", HOUR: 10, COMPLAINTS: 695 },
+    { BORO_NM: "BROOKLYN", HOUR: 10, COMPLAINTS: 251 },
+    { BORO_NM: "BRONX", HOUR: 10, COMPLAINTS: 696 },
+    { BORO_NM: "QUEENS", HOUR: 10, COMPLAINTS: 115 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 11, COMPLAINTS: 50 },
+    { BORO_NM: "MANHATTAN", HOUR: 11, COMPLAINTS: 736 },
+    { BORO_NM: "BROOKLYN", HOUR: 11, COMPLAINTS: 257 },
+    { BORO_NM: "BRONX", HOUR: 11, COMPLAINTS: 302 },
+    { BORO_NM: "QUEENS", HOUR: 11, COMPLAINTS: 118 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 11, COMPLAINTS: 48 },
+    { BORO_NM: "MANHATTAN", HOUR: 12, COMPLAINTS: 937 },
+    { BORO_NM: "BROOKLYN", HOUR: 12, COMPLAINTS: 331 },
+    { BORO_NM: "BRONX", HOUR: 12, COMPLAINTS: 370 },
+    { BORO_NM: "QUEENS", HOUR: 12, COMPLAINTS: 116 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 12, COMPLAINTS: 70 },
+    { BORO_NM: "MANHATTAN", HOUR: 13, COMPLAINTS: 846 },
+    { BORO_NM: "BROOKLYN", HOUR: 13, COMPLAINTS: 282 },
+    { BORO_NM: "BRONX", HOUR: 13, COMPLAINTS: 450 },
+    { BORO_NM: "QUEENS", HOUR: 13, COMPLAINTS: 131 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 13, COMPLAINTS: 54 },
+    { BORO_NM: "MANHATTAN", HOUR: 14, COMPLAINTS: 902 },
+    { BORO_NM: "BROOKLYN", HOUR: 14, COMPLAINTS: 310 },
+    { BORO_NM: "BRONX", HOUR: 14, COMPLAINTS: 396 },
+    { BORO_NM: "QUEENS", HOUR: 14, COMPLAINTS: 145 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 14, COMPLAINTS: 59 },
+    { BORO_NM: "MANHATTAN", HOUR: 15, COMPLAINTS: 987 },
+    { BORO_NM: "BROOKLYN", HOUR: 15, COMPLAINTS: 347 },
+    { BORO_NM: "BRONX", HOUR: 15, COMPLAINTS: 440 },
+    { BORO_NM: "QUEENS", HOUR: 15, COMPLAINTS: 164 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 15, COMPLAINTS: 65 },
+    { BORO_NM: "MANHATTAN", HOUR: 16, COMPLAINTS: 1004 },
+    { BORO_NM: "BROOKLYN", HOUR: 16, COMPLAINTS: 338 },
+    { BORO_NM: "BRONX", HOUR: 16, COMPLAINTS: 454 },
+    { BORO_NM: "QUEENS", HOUR: 16, COMPLAINTS: 159 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 16, COMPLAINTS: 61 },
+    { BORO_NM: "MANHATTAN", HOUR: 17, COMPLAINTS: 999 },
+    { BORO_NM: "BROOKLYN", HOUR: 17, COMPLAINTS: 344 },
+    { BORO_NM: "BRONX", HOUR: 17, COMPLAINTS: 459 },
+    { BORO_NM: "QUEENS", HOUR: 17, COMPLAINTS: 385 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 17, COMPLAINTS: 62 },
+    { BORO_NM: "MANHATTAN", HOUR: 18, COMPLAINTS: 938 },
+    { BORO_NM: "BROOKLYN", HOUR: 18, COMPLAINTS: 339 },
+    { BORO_NM: "BRONX", HOUR: 18, COMPLAINTS: 460 },
+    { BORO_NM: "QUEENS", HOUR: 18, COMPLAINTS: 166 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 18, COMPLAINTS: 59 },
+    { BORO_NM: "MANHATTAN", HOUR: 19, COMPLAINTS: 848 },
+    { BORO_NM: "BROOKLYN", HOUR: 19, COMPLAINTS: 316 },
+    { BORO_NM: "BRONX", HOUR: 19, COMPLAINTS: 440 },
+    { BORO_NM: "QUEENS", HOUR: 19, COMPLAINTS: 158 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 19, COMPLAINTS: 55 },
+    { BORO_NM: "MANHATTAN", HOUR: 20, COMPLAINTS: 790 },
+    { BORO_NM: "BROOKLYN", HOUR: 20, COMPLAINTS: 312 },
+    { BORO_NM: "BRONX", HOUR: 20, COMPLAINTS: 245 },
+    { BORO_NM: "QUEENS", HOUR: 20, COMPLAINTS: 157 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 20, COMPLAINTS: 55 },
+    { BORO_NM: "MANHATTAN", HOUR: 21, COMPLAINTS: 664 },
+    { BORO_NM: "BROOKLYN", HOUR: 21, COMPLAINTS: 282 },
+    { BORO_NM: "BRONX", HOUR: 21, COMPLAINTS: 384 },
+    { BORO_NM: "QUEENS", HOUR: 21, COMPLAINTS: 140 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 21, COMPLAINTS: 49 },
+    { BORO_NM: "MANHATTAN", HOUR: 22, COMPLAINTS: 590 },
+    { BORO_NM: "BROOKLYN", HOUR: 22, COMPLAINTS: 259 },
+    { BORO_NM: "BRONX", HOUR: 22, COMPLAINTS: 354 },
+    { BORO_NM: "QUEENS", HOUR: 22, COMPLAINTS: 131 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 22, COMPLAINTS: 44 },
+    { BORO_NM: "MANHATTAN", HOUR: 23, COMPLAINTS: 530 },
+    { BORO_NM: "BROOKLYN", HOUR: 23, COMPLAINTS: 228 },
+    { BORO_NM: "BRONX", HOUR: 23, COMPLAINTS: 306 },
+    { BORO_NM: "QUEENS", HOUR: 23, COMPLAINTS: 114 },
+    { BORO_NM: "STATEN_ISLAND", HOUR: 23, COMPLAINTS: 41 }
+  ];
+</script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="scripts/myscript.js"></script>
 
