@@ -9,40 +9,40 @@ library(scales)
 
 
 ```{r}
-df <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_201920212023.csv')
-df
+# df <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_2019_2023.csv')
+df <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_2023.csv')
 ```
 
 ```{r}
-data2 <- df
-data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
-
-hourly_data <- data2 |> 
-  filter(!is.na(CMPLNT_FR_HOUR)) |>  
-  count(CMPLNT_FR_HOUR) |>          
-  complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
-
-ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
-  labs(
-    title = "Complaints Filed by Time of Day",
-    x = "Hour of Day",
-    y = "Counts (in thousands)"
-  ) +
-  scale_x_continuous(breaks = 0:23, labels = 0:23) +
-  scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
-  theme_minimal()
+# data2 <- df
+# data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
+# 
+# hourly_data <- data2 |> 
+#   filter(!is.na(CMPLNT_FR_HOUR)) |>  
+#   count(CMPLNT_FR_HOUR) |>          
+#   complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
+# 
+# ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
+#   geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
+#   labs(
+#     title = "Complaints Filed by Time of Day",
+#     x = "Hour of Day",
+#     y = "Counts (in thousands)"
+#   ) +
+#   scale_x_continuous(breaks = 0:23, labels = 0:23) +
+#   scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
+#   theme_minimal()
 ```
 
 ```{r}
-data_raw <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
-head(data_raw)
+# data_raw <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_20241118.csv')
+# head(data_raw)
 ```
 
 
 ```{r}
 # Converting '(null)' and 'UNKNOWN' strings to NAs
-data <- data_raw |> 
+data <- df |> 
   mutate(across(everything(), ~ replace(., . %in% c('(null)', 'UNKNOWN'), NA)))
 
 # During our initial data exploration, we found there were 5 cols with > 95% missing data, 
@@ -59,28 +59,28 @@ data$RPT_DT <- mdy(data$RPT_DT)
 
 data$CMPLNT_FR_TM <- hms(data$CMPLNT_FR_TM)  
 data$CMPLNT_TO_TM <- hms(data$CMPLNT_TO_TM) 
-glimpse(data)
+# glimpse(data)
 ```
 ```{r}
-data2 <- data
-
-data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
-
-hourly_data <- data2 |> 
-  filter(!is.na(CMPLNT_FR_HOUR)) |>  
-  count(CMPLNT_FR_HOUR) |>          
-  complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
-
-ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
-  labs(
-    title = "Complaints Filed by Time of Day",
-    x = "Hour of Day",
-    y = "Counts (in thousands)"
-  ) +
-  scale_x_continuous(breaks = 0:23, labels = 0:23) +
-  scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
-  theme_minimal()
+# data2 <- data
+# 
+# data2$CMPLNT_FR_HOUR <- hour(data2$CMPLNT_FR_TM)
+# 
+# hourly_data <- data2 |> 
+#   filter(!is.na(CMPLNT_FR_HOUR)) |>  
+#   count(CMPLNT_FR_HOUR) |>          
+#   complete(CMPLNT_FR_HOUR = 0:23, fill = list(n = 0))  
+# 
+# ggplot(hourly_data, aes(x = CMPLNT_FR_HOUR, y = n)) +
+#   geom_bar(stat = "identity", fill = "skyblue", color = "black", width = 1, alpha = 0.7) +
+#   labs(
+#     title = "Complaints Filed by Time of Day",
+#     x = "Hour of Day",
+#     y = "Counts (in thousands)"
+#   ) +
+#   scale_x_continuous(breaks = 0:23, labels = 0:23) +
+#   scale_y_continuous(labels = label_number(scale = 0.001)) +  # Divide by 1000 and add labels
+#   theme_minimal()
 
 ```
 
@@ -104,7 +104,7 @@ mosaic_data <- data |>
 
 mosaic(Complaint_Severity ~ Complaint_Filed_Borough, mosaic_data, direction = c("v", "h"),
        highlighting_fill = c("#B3D9FF", "#66B2FF", "#0066CC"),
-       main = "Complaints by Borough and Severity")
+       main = "Crime by Borough and Severity")
 ```
 
 ```{r}
@@ -224,7 +224,5 @@ ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentag
     strip.text = element_text(size = 10, face = "bold")  
   )
 ```
-```{r}
 
-```
 
