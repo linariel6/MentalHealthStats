@@ -6,7 +6,8 @@ library(dplyr)
 ```
 
 ```{r}
-data <- read.csv("NYPD_Complaint_Data_Historic_2019_2023.csv")
+# data <- read.csv("NYPD_Complaint_Data_Historic_2019_2023.csv")
+data <- read_csv('/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_2019_2023.csv')
 ```
 
 ```{r}
@@ -169,12 +170,6 @@ ggsave("plot3.png", width = 10, height = 7, path = "ResultPlots/")
 
 ```{r}
 
-# Aggregate weekly crime data
-
-weekly_crimes <- data_2023 %>%
-  mutate(
-    week = floor_date(date, "week", week_start = 1)  # Start weeks on Monday
-  ) %>%
 
 # Filter out weeks with fewer than 7 days
 weekly_crimes <- data_2023 %>%
