@@ -11,3 +11,4 @@ group aims to analyze trends and patterns in the types of complaints, including 
 crime categories, across different boroughs of NYC in 2023. This will be achieved by creating 
 visualizations to understand the spatial and temporal complaint patterns reported to the NYPD, 
 ultimately generating useful insights to better support NYC public health.
+
