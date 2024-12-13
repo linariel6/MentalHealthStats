@@ -449,8 +449,8 @@ data_2023 <- data_2023 |>
   )
 ```
 ```{r}
-#| fig-width: 19
-#| fig-height: 5
+#| fig-width: 12
+#| fig-height: 10
 #| 
 heatmap_data <- data_2023 |> 
   filter(!is.na(Time_of_Day) & !is.na(Offense_Category) & !is.na(BOROUGH)) |> 
@@ -466,21 +466,26 @@ library(scales)
 color_palette <- brewer.pal(n = 5, name = "Blues")
 
 ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentage)) +
-  geom_tile(color = "white") +
-  scale_fill_gradientn(colors = color_palette, name = "Percentage", labels = percent_format(scale = 1)) +
+  geom_tile(color = "white") +  # Add white grid lines between tiles
+  scale_fill_gradientn(
+    colors = color_palette,
+    name = "Percentage",
+    labels = percent_format(scale = 1)  # Format percentage
+  ) +
   labs(
     title = "Percentage of Offense Categories by Time of Day and Borough (2023)",
     x = "Time of Day",
     y = "Offense Category",
     caption = "M = Morning, A = Afternoon, E = Evening, N = Night"
   ) +
-  facet_wrap(~ BOROUGH, nrow = 1) + 
-  theme_minimal(20) +
+  facet_wrap(~ BOROUGH, nrow = 2) +  # Create two rows of facets
+  theme_minimal(base_size = 16) +
   theme(
-    strip.text = element_text(size = 14, face = "bold")  
+    strip.text = element_text(size = 14, face = "bold"),  # Bold facet labels
+    panel.spacing = unit(1, "lines")  # Increase spacing between panels
   )
 
-ggsave("plot9.png", width = 19, height = 5,path = "ResultPlots/")
+ggsave("plot9.png", width = 12, height = 10,path = "ResultPlots/")
 ```
 
 ```{r}
