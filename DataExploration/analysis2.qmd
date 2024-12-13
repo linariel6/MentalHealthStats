@@ -593,7 +593,7 @@ ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
     )
   ) +  # Customize colors for each Borough
   labs(
-    title = "Geographic Distribution of Crime Incidents by Borough (Sampled 25 Thousand Observations)",
+    title = "Geographic Distribution of Crime Incidents by Borough (Sampled 25 Thousand Observations from 2023)",
     x = "Longitude",
     y = "Latitude",
     color = "Borough"
