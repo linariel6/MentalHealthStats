@@ -1,1 +1,41 @@
 # Results
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot1.png){fig-align="center" width="80%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot2.png){fig-align="center" width="80%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot3.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot4.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot5.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot6.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot8.png){fig-align="center" width="70%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot7.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot9.png){fig-align="center" width="100%"}
+:::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot10.png){fig-align="center" width="100%"}
+:::
