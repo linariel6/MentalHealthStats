@@ -6,7 +6,7 @@ library(dplyr)
 ```
 
 ```{r}
-data <- read.csv("/Users/ariellin/Documents/EDAV/FinalProject/NYPD_Complaint_Data_Historic_2019_2023.csv")
+data <- read.csv("NYPD_Complaint_Data_Historic_2019_2023.csv")
 ```
 
 ```{r}
@@ -35,8 +35,6 @@ data_2023 <- data %>%
 ```
 
 ```{r}
-
-
 yearly_data <- data %>%
   group_by(year) %>%
   summarize(count = n(), .groups = "drop")
@@ -60,7 +58,6 @@ ggplot(yearly_data, aes(x = year, y = count / 1000)) +
   )
 
 ggsave("plot1.png", width = 8, height = 5, path = "ResultPlots/")
-
 ```
 
 
@@ -123,11 +120,13 @@ ggplot(filtered_data, aes(x = count, y = BOROUGH)) +
   )
 
 ggsave("plot2.png", width = 8, height = 5, path = "ResultPlots/")
+
 ```
 
 
 
 ```{r}
+
 #| fig-width: 10
 #| fig-height: 7
 
@@ -162,17 +161,24 @@ ggplot(facet_data, aes(x = month, y = monthly_count, color = factor(year), group
   scale_color_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"))+
   scale_y_continuous(breaks = scales::pretty_breaks(n = 6))
 
+
 ggsave("plot3.png", width = 10, height = 7, path = "ResultPlots/")
+
 ```
 
 
 ```{r}
 
 # Aggregate weekly crime data
+
 weekly_crimes <- data_2023 %>%
   mutate(
     week = floor_date(date, "week", week_start = 1)  # Start weeks on Monday
   ) %>%
+
+# Filter out weeks with fewer than 7 days
+weekly_crimes <- data_2023 %>%
+  mutate(week = floor_date(date, "week", week_start = 1)) %>%  # Start weeks on Monday
   group_by(BOROUGH, week) %>%
   summarise(
     weekly_crime_count = n(),       # Count occurrences
@@ -181,6 +187,7 @@ weekly_crimes <- data_2023 %>%
   ) %>%
   filter(days_in_week == 7) %>%  # Keep only full weeks (7 days)
   select(-days_in_week)          # Remove the temporary column for clarity
+
 
 # Add week number relative to the start of the dataset
 weekly_crimes <- weekly_crimes %>%
@@ -204,6 +211,27 @@ ggplot(weekly_crimes, aes(x = week_number, y = weekly_crime_count, color = BOROU
     legend.position = "right"
   )
 ggsave("plot4.png", width = 8, height = 5, path = "ResultPlots/")
+
+
+# Plot with cleaned legend labels
+ggplot(weekly_crimes, aes(x = week, y = weekly_crime_count, color = BOROUGH)) +
+  geom_line() +
+  scale_x_date(
+    date_breaks = "1 month",    
+    date_labels = "%b %Y"       
+  ) +
+  labs(
+    title = "Weekly Crime Incident Trends Across Patrol Boroughs(2023)", 
+    x = "Month", 
+    y = "Number of Reported Crimes",
+    color = "Borough"  # Update legend title
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right", 
+    axis.text.x = element_text(angle = 45, hjust = 1) 
+  )
+
 
 ```
 
@@ -235,15 +263,15 @@ ggplot(data_hour, aes(x = hour, y = count, fill = BOROUGH)) +
     axis.text.y = element_text(size = 8),  
     panel.spacing = unit(1, "lines")  # Increase spacing between facets
   )
-
 ggsave("plot5.png", path = "ResultPlots/")
+
 ```
 
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 5
-#| 
+
 graph_data <- data_2023 %>%
   mutate(
     SUSP_SEX = case_when(
@@ -283,6 +311,7 @@ ggplot(graph_data, aes(x = BOROUGH, y = count, fill = SUSP_SEX)) +
   scale_fill_manual(values = c("#B2DF8A", "#33A02C", "#1F78B4"))  
 
 ggsave("plot6.png", width = 15, height = 5,path = "ResultPlots/")
+
 ```
 
 ```{r}
@@ -335,6 +364,7 @@ data_density <- data_2023 %>%
   summarise(count = n(), .groups = "drop") %>%
   group_by(PREM_TYPE_GROUP) %>%  # Normalize density by premises group
   mutate(density = count / sum(count))
+
 
 ggplot(data_density, aes(x = hour, y = PREM_TYPE_GROUP, fill = density)) +
   geom_tile() +
@@ -588,6 +618,7 @@ ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
   )
 
 ggsave("plot10.png", width = 10, height = 8,path = "ResultPlots/")
+
 ```
 
 
