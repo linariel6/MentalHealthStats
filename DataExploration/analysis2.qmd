@@ -59,6 +59,8 @@ ggplot(yearly_data, aes(x = year, y = count / 1000)) +
     plot.title = element_text(size = 16, hjust = 0.5)
   )
 
+ggsave("plot1.png", width = 8, height = 5, path = "ResultPlots/")
+
 ```
 
 
@@ -119,6 +121,8 @@ ggplot(filtered_data, aes(x = count, y = BOROUGH)) +
   scale_x_continuous(
     expand = expansion(mult = c(0.02, 0.15))  # Add extra space on the right side
   )
+
+ggsave("plot2.png", width = 8, height = 5, path = "ResultPlots/")
 ```
 
 
@@ -157,6 +161,8 @@ ggplot(facet_data, aes(x = month, y = monthly_count, color = factor(year), group
   ) +
   scale_color_manual(values = c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"))+
   scale_y_continuous(breaks = scales::pretty_breaks(n = 6))
+
+ggsave("plot3.png", width = 10, height = 7, path = "ResultPlots/")
 ```
 
 
@@ -197,6 +203,7 @@ ggplot(weekly_crimes, aes(x = week_number, y = weekly_crime_count, color = BOROU
   theme(
     legend.position = "right"
   )
+ggsave("plot4.png", width = 8, height = 5, path = "ResultPlots/")
 
 ```
 
@@ -229,6 +236,7 @@ ggplot(data_hour, aes(x = hour, y = count, fill = BOROUGH)) +
     panel.spacing = unit(1, "lines")  # Increase spacing between facets
   )
 
+ggsave("plot5.png", path = "ResultPlots/")
 ```
 
 
@@ -273,6 +281,8 @@ ggplot(graph_data, aes(x = BOROUGH, y = count, fill = SUSP_SEX)) +
     panel.grid.major.x = element_blank()  
   ) +
   scale_fill_manual(values = c("#B2DF8A", "#33A02C", "#1F78B4"))  
+
+ggsave("plot6.png", width = 15, height = 5,path = "ResultPlots/")
 ```
 
 ```{r}
@@ -344,6 +354,8 @@ ggplot(data_density, aes(x = hour, y = PREM_TYPE_GROUP, fill = density)) +
     plot.title = element_text(size = 14),
     legend.position = "right"
   )
+
+ggsave("plot7.png", width = 9, height = 5,path = "ResultPlots/")
 ```
 
 ```{r}
@@ -394,7 +406,22 @@ mosaic(Complaint_Severity ~ Complaint_Filed_Borough, mosaic_data, direction = c(
          gp_varnames = gpar(fontsize = 15, col = "white")
         ))
 
+if (!dir.exists("ResultPlots")) dir.create("ResultPlots")
 
+# Save the mosaic plot to a file
+png("ResultPlots/plot8.png", width = 3000, height = 3000, res = 300)  # Set dimensions and resolution
+mosaic(
+  Complaint_Severity ~ Complaint_Filed_Borough, 
+  mosaic_data, 
+  direction = c("v", "h"),  # Vertical and horizontal split
+  highlighting_fill = c("#B3D9FF", "#66B2FF", "#0066CC"),  # Custom fill colors
+  main = "Crime Severity by Borough (2023)",
+  labeling_args = list(
+    gp_labels = gpar(fontsize = 16),  # Font size for labels
+    gp_varnames = gpar(fontsize = 15, col = "white")  # Font size and color for variable names
+  )
+)
+dev.off() 
 ```
 
 ```{r}
@@ -452,34 +479,10 @@ ggplot(heatmap_data, aes(x = Time_of_Day, y = Offense_Category, fill = Percentag
   theme(
     strip.text = element_text(size = 14, face = "bold")  
   )
+
+ggsave("plot9.png", width = 19, height = 5,path = "ResultPlots/")
 ```
-```{r}
 
-color_palette <- brewer.pal(n = 5, name = "Blues")
-
-# in the age group cols, there are numbers don't make sense 
-# > unique(data$VIC_AGE_GROUP)
-#  [1] NA      "25-44" "18-24" "45-64" "65+"   "<18"   "-60"   "-971"  "-975"  "1018"  "-932"  "1023"  "1013" 
-# [14] "-46"   "962"   "-962"  "-64"   "-953"  "-30"   "-2"    "1020"  "-964"  "-61"   "-58"   "953"   "-929" 
-# [27] "-961"  "-10"   "1022"  "-970"  "-6"    "-968"  "-3"    "-33"   "949"  
-# we will only plot the ones that make sense
-
-valid_age_groups <- c("<18", "18-24", "25-44", "45-64", "65+")
-
-age_heatmap <- data_2023 |> 
-  filter(SUSP_AGE_GROUP %in% valid_age_groups & VIC_AGE_GROUP %in% valid_age_groups) |> 
-  count(SUSP_AGE_GROUP, VIC_AGE_GROUP)  # Count unique pairings
-
-ggplot(age_heatmap, aes(x = SUSP_AGE_GROUP, y = VIC_AGE_GROUP, fill = n)) +
-  geom_tile(color = "white") +
-  scale_fill_gradientn(colors = color_palette, name = "Count") +
-  labs(
-    title = "Suspect-Victim Age Group Interactions (2023)",
-    x = "Suspect Age Group",
-    y = "Victim Age Group"
-  ) +
-  theme_minimal()
-```
 ```{r}
 #| fig-width: 10
 #| fig-height: 8
@@ -521,4 +524,66 @@ ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
     legend.position = "right"
   )
 ```
+
+
+```{r}
+#| fig-width: 10
+#| fig-height: 8
+
+# sampling 25k observations across 2023 data in proportion to the representation of each borough
+library(dplyr)
+
+# Step 1: Calculate borough sizes and proportional sample sizes
+borough_sizes <- data_2023 %>%
+  filter(!is.na(BOROUGH)) %>%
+  group_by(BOROUGH) %>%
+  summarise(
+    borough_size = n(),  # Total count per borough
+    .groups = "drop"
+  ) %>%
+  mutate(
+    sample_size = round(25000 * borough_size / sum(borough_size))  # Proportional sample size
+  )
+
+# Step 2: Merge sample sizes into the main dataset
+data_sample <- data_2023 %>%
+  filter(!is.na(BOROUGH)) %>%
+  left_join(borough_sizes, by = "BOROUGH") %>%  # Add sample_size to the data
+  group_split(BOROUGH) %>%  # Split the data by borough
+  map_dfr(~ slice_sample(.x, n = unique(.x$sample_size)))  # Sample for each borough
+
+# Step 3: Scatter plot with Borough differentiation
+ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
+  geom_point(alpha = 0.2, stroke = 0) +  # Points colored by Borough
+  scale_color_manual(
+    values = c(
+      "QUEENS NORTH" = "red2",   
+      "QUEENS SOUTH" = "steelblue2",   
+      "BRONX" = "seagreen2",         
+      "BKLYN NORTH" = "orchid2",    
+      "BKLYN SOUTH" = "cyan2",    
+      "MAN NORTH" = "gold2",      
+      "MAN SOUTH" = "salmon2",      
+      "STATEN ISLAND" = "lightpink2"
+    )
+  ) +  # Customize colors for each Borough
+  labs(
+    title = "Geographic Distribution of Crime Incidents by Borough (Sampled 25 Thousand Observations)",
+    x = "Longitude",
+    y = "Latitude",
+    color = "Borough"
+  ) +
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +  # Ensure legend colors have alpha = 1
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text = element_text(size = 10),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14, hjust = 0.5),
+    legend.position = "right"
+  )
+
+ggsave("plot10.png", width = 10, height = 8,path = "ResultPlots/")
+```
+
+
 
