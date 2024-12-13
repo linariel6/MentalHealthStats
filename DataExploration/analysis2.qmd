@@ -557,7 +557,7 @@ ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
 
 
 ```{r}
-#| fig-width: 10
+#| fig-width: 11
 #| fig-height: 8
 
 # sampling 25k observations across 2023 data in proportion to the representation of each borough
@@ -612,9 +612,40 @@ ggplot(data_sample, aes(x = Longitude, y = Latitude, color = BOROUGH)) +
     legend.position = "right"
   )
 
-ggsave("plot10.png", width = 10, height = 8,path = "ResultPlots/")
+ggsave("plot10.png", width = 11, height = 8,path = "ResultPlots/")
 
 ```
 
+```{r}
+#| fig-width: 8
+#| fig-height: 5
+#| 
+color_palette <- brewer.pal(n = 5, name = "Blues")
+
+# in the age group cols, there are numbers don't make sense 
+# > unique(data$VIC_AGE_GROUP)
+#  [1] NA      "25-44" "18-24" "45-64" "65+"   "<18"   "-60"   "-971"  "-975"  "1018"  "-932"  "1023"  "1013" 
+# [14] "-46"   "962"   "-962"  "-64"   "-953"  "-30"   "-2"    "1020"  "-964"  "-61"   "-58"   "953"   "-929" 
+# [27] "-961"  "-10"   "1022"  "-970"  "-6"    "-968"  "-3"    "-33"   "949"  
+# we will only plot the ones that make sense
+
+valid_age_groups <- c("<18", "18-24", "25-44", "45-64", "65+")
+
+age_heatmap <- data_2023 |> 
+  filter(SUSP_AGE_GROUP %in% valid_age_groups & VIC_AGE_GROUP %in% valid_age_groups) |> 
+  count(SUSP_AGE_GROUP, VIC_AGE_GROUP)  # Count unique pairings
+
+ggplot(age_heatmap, aes(x = SUSP_AGE_GROUP, y = VIC_AGE_GROUP, fill = n)) +
+  geom_tile(color = "white") +
+  scale_fill_gradientn(colors = color_palette, name = "Count") +
+  labs(
+    title = "Suspect-Victim Age Group Interactions (2023)",
+    x = "Suspect Age Group",
+    y = "Victim Age Group"
+  ) +
+  theme_minimal()
+
+ggsave("plot11.png", width = 8, height = 5,path = "ResultPlots/")
+```
 
 

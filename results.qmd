@@ -39,3 +39,7 @@
 ::: {style="text-align: center;"}
 ![](DataExploration/ResultPlots/plot10.png){fig-align="center" width="100%"}
 :::
+
+::: {style="text-align: center;"}
+![](DataExploration/ResultPlots/plot11.png){fig-align="center" width="100%"}
+:::
